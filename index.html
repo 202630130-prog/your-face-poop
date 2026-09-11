@@ -1,0 +1,243 @@
+html_content = """<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘 먹을 저녁 메뉴 추천</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%);
+            --card-bg: #ffffff;
+            --text-main: #2D3748;
+            --text-sub: #718096;
+            --primary: #FF6B6B;
+            --primary-hover: #FF4747;
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            color: var(--text-main);
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 15px;
+            color: var(--text-sub);
+        }
+
+        .display-card {
+            background: #FFF9F5;
+            border: 2px dashed #FFD8C2;
+            border-radius: 20px;
+            padding: 35px 20px;
+            margin-bottom: 30px;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .emoji-box {
+            font-size: 80px;
+            line-height: 1.1;
+            margin-bottom: 15px;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+        }
+
+        .menu-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-tag {
+            font-size: 13px;
+            color: #FF6B6B;
+            background: #FFEBEB;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .category-tag.hidden {
+            visibility: hidden;
+        }
+
+        .btn-recommend {
+            width: 100%;
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            padding: 18px 0;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.35);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .btn-recommend:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.45);
+        }
+
+        .btn-recommend:active {
+            transform: translateY(1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        /* 애니메이션 효과 */
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+        }
+
+        .bounce {
+            animation: bounce 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ 오늘 저녁 뭐 먹지?</h1>
+            <p>결정이 어려울 땐 버튼을 눌러보세요!</p>
+        </div>
+
+        <div class="display-card">
+            <div id="emoji" class="emoji-box">❓</div>
+            <div id="menuName" class="menu-name">버튼을 눌러 추천받으세요!</div>
+            <div id="categoryTag" class="category-tag hidden">카테고리</div>
+        </div>
+
+        <button id="recommendBtn" class="btn-recommend">저녁 메뉴 추천</button>
+    </div>
+
+    <script>
+        // 저녁 메뉴 데이터 리스트 (이모지, 메뉴명, 카테고리)
+        const menuList = [
+            { emoji: '🍲', name: '김치찌개', category: '한식' },
+            { emoji: '🥘', name: '된장찌개', category: '한식' },
+            { emoji: '🥩', name: '삼겹살 구이', category: '한식' },
+            { emoji: '🍗', name: '치킨', category: '야식/한식' },
+            { emoji: '🍕', name: '피자', category: '양식' },
+            { emoji: '🍝', name: '파스타', category: '양식' },
+            { emoji: '🍔', name: '수제버거', category: '양식' },
+            { emoji: '🍣', name: '초밥', category: '일식' },
+            { emoji: '🍜', name: '라멘', category: '일식' },
+            { emoji: '🍛', name: '카레라이스', category: '일식/한식' },
+            { emoji: '🥟', name: '마라탕', category: '중식' },
+            { emoji: '🥡', name: '짜장면 & 탕수육', category: '중식' },
+            { emoji: '🌮', name: '타코', category: '남미음식' },
+            { emoji: '🥗', name: '신선한 샐러드', category: '다이어트' },
+            { emoji: '🥩', name: '스테이크', category: '양식' },
+            { emoji: '🍲', name: '샤브샤브', category: '일식/한식' },
+            { emoji: '🍢', name: '떡볶이 & 튀김', category: '분식' },
+            { emoji: '🍚', name: '비빔밥', category: '한식' }
+        ];
+
+        const emojiEl = document.getElementById('emoji');
+        const menuNameEl = document.getElementById('menuName');
+        const categoryTagEl = document.getElementById('categoryTag');
+        const recommendBtn = document.getElementById('recommendBtn');
+
+        let isSpinning = false;
+
+        function getRandomMenu() {
+            if (isSpinning) return;
+            isSpinning = true;
+
+            let counter = 0;
+            const maxCycles = 15; // 롤링 횟수
+            const intervalTime = 60; // 롤링 속도 (ms)
+
+            categoryTagEl.classList.add('hidden');
+
+            // 간단한 슬롯머신 효과
+            const timer = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * menuList.length);
+                const tempMenu = menuList[randomIndex];
+
+                emojiEl.textContent = tempMenu.emoji;
+                menuNameEl.textContent = tempMenu.emoji + ' 골라보는 중...';
+
+                counter++;
+
+                if (counter >= maxCycles) {
+                    clearInterval(timer);
+                    
+                    // 최종 선택 메뉴
+                    const finalMenu = menuList[Math.floor(Math.random() * menuList.length)];
+                    
+                    emojiEl.textContent = finalMenu.emoji;
+                    menuNameEl.textContent = finalMenu.name;
+                    categoryTagEl.textContent = finalMenu.category;
+                    categoryTagEl.classList.remove('hidden');
+
+                    // 바운스 애니메이션 추가
+                    emojiEl.classList.add('bounce');
+                    setTimeout(() => emojiEl.classList.remove('bounce'), 400);
+
+                    isSpinning = false;
+                }
+            }, intervalTime);
+        }
+
+        recommendBtn.addEventListener('click', getRandomMenu);
+    </script>
+</body>
+</html>
+"""
+
+with open("dinner_recommendation.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("HTML file created successfully.")
